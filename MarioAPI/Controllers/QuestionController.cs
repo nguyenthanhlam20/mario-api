@@ -1,4 +1,5 @@
 ﻿using MarioAPI.Models;
+using MarioAPI.Requests;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -20,34 +21,17 @@ namespace MarioAPI.Controllers
             return Ok(await _context.Questions.Include(x => x.Answers).ToListAsync());
         }
 
-        [HttpGet]
-        public async Task<IActionResult> Reset()
-        {
-            try
-            {
-                var questions = await _context.Questions.ToListAsync();
-                foreach (var item in questions)
-                {
-                    item.HasAnswer = false;
-                }
-                await _context.SaveChangesAsync();
-                return Ok();
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(ex.Message);
-            }
-        }
-
         [HttpPost]
-        public async Task<IActionResult> Check(int questionId, int selectedAnswer)
+        public async Task<IActionResult> Check(EvaluateQuestionRequest request)
         {
             try
             {
-                var question = await _context.Questions.FirstOrDefaultAsync(x => x.QuestionId == questionId && x.CorrectAnswerId == selectedAnswer);
+                var question = await _context.Questions
+                    .FirstOrDefaultAsync(x => x.QuestionId == request.QuestionId && x.CorrectAnswerId == request.AnswerId);
                 if (question != null)
                 {
                     question.HasAnswer = true;
+                    _context.Entry(question).State = EntityState.Modified;
                     await _context.SaveChangesAsync();
                     return Ok();
                 }
@@ -59,18 +43,26 @@ namespace MarioAPI.Controllers
         [HttpGet]
         public async Task<IActionResult> Random()
         {
-            Question? question = null;
-            var maximum = _context.Questions.Count();
-            do
-            {
-                var random = new Random(maximum).Next();
-                question = await _context.Questions
-                    .Include(x => x.Answers)
-                    .Where(x => x.QuestionId == random)
-                    .FirstOrDefaultAsync();
-            } while (question == null);
+            var question = await _context.Questions
+                .Include(x => x.Answers)
+                .FirstOrDefaultAsync(x => x.HasAnswer == false);
+
+            if (question?.QuestionId == _context.Questions.Count()) await Reset();
 
             return Ok(question);
+        }
+
+        private async Task Reset()
+        {
+
+            var questions = await _context.Questions.ToListAsync();
+            foreach (var item in questions)
+            {
+                item.HasAnswer = false;
+                _context.Entry(item).State = EntityState.Modified;
+            }
+            await _context.SaveChangesAsync();
+
         }
     }
 }

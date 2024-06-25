@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-
-namespace MarioAPI.Models;
+﻿namespace MarioAPI.Models;
 
 public partial class Answer
 {

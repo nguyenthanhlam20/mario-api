@@ -1,4 +1,5 @@
 using MarioAPI.Models;
+using MarioAPI.Requests;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -15,9 +16,9 @@ namespace MarioAPI.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Login(string username, string password)
+        public async Task<IActionResult> Login(LoginRequest request)
         {
-            var exist = await _context.Accounts.Where(x => x.Username == username && x.Password == password).AnyAsync();
+            var exist = await _context.Accounts.Where(x => x.Username == request.Username && x.Password == request.Password).AnyAsync();
             if (exist) return Ok();
             else return BadRequest();
         }

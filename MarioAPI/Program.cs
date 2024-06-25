@@ -15,12 +15,23 @@ builder.Services.AddControllers().AddJsonOptions(options =>
     options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
 });
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("Cors",
+        builder => builder
+            .AllowAnyOrigin()
+            .AllowAnyHeader()
+            .AllowAnyMethod());
+});
+
 builder.Services.AddDbContext<MarioContext>(options =>
 {
     options.UseSqlServer(builder.Configuration.GetConnectionString("ConnectionString"));
 });
 builder.Services.AddSwaggerGen();
 var app = builder.Build();
+
+
 
 // Configure the HTTP request pipeline.
 
@@ -29,6 +40,8 @@ app.UseHttpsRedirection();
 app.UseAuthorization();
 
 app.MapControllers();
+
+app.UseCors("Cors");
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
